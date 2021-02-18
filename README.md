@@ -6,4 +6,4 @@ ImageJ live cell counter.
 3. You get your cell counts as an Excel file
 
 Built to automate [migration assay](https://www.youtube.com/watch?v=6SON7VAA5-k) cell counting.
-This bot helped me [publish](https://pubmed.ncbi.nlm.nih.gov/25693473/) in the American Journal of Transplantation in 2015
+[American Journal of Transplantation](https://pubmed.ncbi.nlm.nih.gov/25693473/)
