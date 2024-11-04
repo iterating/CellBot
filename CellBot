@@ -1,20 +1,55 @@
-//John Cao's Cellbot
+// John Cao's Cellbot
+
+// UI
+dialog = new Dialog("CellBot", "");
+dialog.addStringField("Root directory (e.g. C:\\Users\\jyoung\\Pictures\\CellBot):", rootDir, 30);
+dialog.addStringField("Raw image prefix (e.g. 20110302_T):", rawPrefix, 30);
+dialog.addStringField("Raw image suffix (e.g. _DA):", rawSuffix, 30);
+dialog.addNumericField("Time point (0-2):", t, 0);
+dialog.addNumericField("Channel (1-2):", c, 0);
+dialog.addCheckbox("Select fields manually", manualSelect);
+dialog.show();
+
+if (dialog.wasCanceled()) {
+	exit("Script canceled.");
+}
+
+rootDir = dialog.getString();
+rawPrefix = dialog.getString();
+rawSuffix = dialog.getString();
+t = dialog.getNextNumber();
+c = dialog.getNextNumber();
+manualSelect = dialog.getCheckbox();
+
+if (manualSelect) {
+	selectWindow("Results");
+	run("Select All");
+	run("Copy");
+	selectWindow("Summary");
+	run("Paste");
+}
 
 // 1.Turn raw images into 8-bit gray images.
 
+rootDir = "G:\\Cellpics\\";
+rawPrefix = "20110302_T";
+rawSuffix = "_DA";
+rawDir = rootDir + "UncountedPics\\";
+grayDir = rootDir + "Image8bit\\";
+
 for (t=0; t<=0; t++) {
 	for (c=1; c<=1; c++) {
-		open("G:\\Cellpics\\UncountedPics\\20110302_T"+t+"_10X_C"+c+"_DA.tif");
+		open(rawDir + rawPrefix + t + "_10X_C" + c + rawSuffix + ".tif");
 		run("8-bit");
-		saveAs("Tiff", "G:\\Cellpics\\Image8bit\\20110302_T"+t+"_10X_C"+c+"_DA.tif");
+		saveAs("Tiff", grayDir + rawPrefix + t + "_10X_C" + c + rawSuffix + ".tif");
 		run("Close");
 	}
 }
 for (t=0; t<=0; t++) {
 	for (c=1; c<=1; c++) {
-		open("G:\\Cellpics\\UncountedPics\\20110302_T"+t+"_10X_C"+c+"_RF.tif");
+		open(rawDir + rawPrefix + t + "_10X_C" + c + "_RF" + rawSuffix + ".tif");
 		run("8-bit");
-		saveAs("Tiff", "G:\\Cellpics\\Image8bit\\20110302_T"+t+"_10X_C"+c+"_RF.tif");
+		saveAs("Tiff", grayDir + rawPrefix + t + "_10X_C" + c + "_RF" + rawSuffix + ".tif");
 		run("Close");
 	}
 }
@@ -24,49 +59,52 @@ for (t=0; t<=0; t++) {
 thredDAPI = 35
 thredGRF = 16
 
+binDir = rootDir + "ImageBinary\\";
+
 for (t=0; t<=0; t++) {
 	for (c=1; c<=1; c++) {
-		open("G:\\Cellpics\\Image8bit\\20110302_T"+t+"_10X_C"+c+"_DA.tif");
+		open(grayDir + rawPrefix + t + "_10X_C" + c + rawSuffix + ".tif");
 		setAutoThreshold("Default");
 		setThreshold(thredDAPI, 255);
 		setOption("BlackBackground", false);
 		run("Convert to Mask");
-		saveAs("Tiff", "G:\\Cellpics\\ImageBinary\\20110302_T"+t+"_10X_C"+c+"_DA.tif");
+		saveAs("Tiff", binDir + rawPrefix + t + "_10X_C" + c + rawSuffix + ".tif");
 		run("Close");
 	}
 }
 
 for (t=0; t<=0; t++) {
 	for (c=1; c<=1; c++) {
-		open("G:\\Cellpics\\Image8bit\\20110302_T"+t+"_10X_C"+c+"_RF.tif");
+		open(grayDir + rawPrefix + t + "_10X_C" + c + "_RF" + rawSuffix + ".tif");
 		setAutoThreshold("Default");
 		setThreshold(thredGRF, 255);
 		setOption("BlackBackground", false);
 		run("Convert to Mask");
-		saveAs("Tiff", "G:\\Cellpics\\ImageBinary\\20110302_T"+t+"_10X_C"+c+"_RF.tif");
+		saveAs("Tiff", binDir + rawPrefix + t + "_10X_C" + c + "_RF" + rawSuffix + ".tif");
 		run("Close");
 	}
 }
 
-
 // 3.Count cells 
+
+outlineDir = rootDir + "ImageOutline\\";
 
 for (t=0; t<=0; t++) {
 	for (c=1; c<=1; c++) {
-		open("G:\\Cellpics\\ImageBinary\\20110302_T"+t+"_10X_C"+c+"_DA.tif");
+		open(binDir + rawPrefix + t + "_10X_C" + c + rawSuffix + ".tif");
 		//TODO: Adjust size here.
 		run("Analyze Particles...", "size=50-1000 show=[Bare Outlines] clear include summarize");
-		saveAs("Tiff", "G:\\Cellpics\\ImageOutline\\20110302_T"+t+"_10X_C"+c+"_DA.tif");
+		saveAs("Tiff", outlineDir + rawPrefix + t + "_10X_C" + c + rawSuffix + ".tif");
 		run("Close");
 		//run("Close");
 	}
 }
 for (t=0; t<=0; t++) {
 	for (c=1; c<=1; c++) {
-		open("G:\\Cellpics\\ImageBinary\\20110302_T"+t+"_10X_C"+c+"_RF.tif");
+		open(binDir + rawPrefix + t + "_10X_C" + c + "_RF" + rawSuffix + ".tif");
 		//Adjust size here.
 		run("Analyze Particles...", "size=50-1000 show=[Bare Outlines] clear include summarize");
-		saveAs("Tiff", "G:\\Cellpics\\ImageOutline\\20110302_T"+t+"_10X_C"+c+"_RF.tif");
+		saveAs("Tiff", outlineDir + rawPrefix + t + "_10X_C" + c + "_RF" + rawSuffix + ".tif");
 		run("Close");
 		//run("Close");
 	}
@@ -74,16 +112,8 @@ for (t=0; t<=0; t++) {
 
 // 4.Save to summary.xls file
 selectWindow("Summary"); 
-run("Text...", "save=G:\\Cellpics\\record\\20110302_Summary.xls");
+recordDir = rootDir + "record\\";
+run("Text...", "save="+recordDir+rawPrefix+"_"+rawSuffix+"_Summary.xls");
 run("Close");
 
-for (t=0; t<=0; t++) {
-	for (c=1; c<=1; c++) {
-		run("Close");
-	}
-}
-for (t=0; t<=0; t++) {
-	for (c=1; c<=1; c++) {
-		run("Close");
-	}
-}
+
